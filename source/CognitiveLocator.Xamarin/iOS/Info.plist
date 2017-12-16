@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleIdentifier</key>
-	<string>com.cognitivelocator.app</string>
+	<string>com.hjr.PushInstallationPOC</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en-US</string>
 	<key>CFBundleShortVersionString</key>
@@ -83,14 +83,14 @@
 		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>fb1812003772432184</string>
+				<string></string>
 			</array>
 		</dict>
 	</array>
 	<key>FacebookAppID</key>
-	<string>YOUR_FACEBOOK_APP_ID</string>
+	<string></string>
 	<key>FacebookDisplayName</key>
-	<string>YOUR_FACEBOOK_APP_NAME</string>
+	<string>Locator</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>fbapi</string>

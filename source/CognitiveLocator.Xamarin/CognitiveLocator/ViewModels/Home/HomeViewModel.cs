@@ -19,6 +19,21 @@ namespace CognitiveLocator.ViewModels
         public Command LogoutCommand { get; set; }
         public Command NavigateToResultsCommand { get; set; }
 
+
+        #warning Only for testing
+        public System.Windows.Input.ICommand NotificationsCommand
+        {
+            get
+            {
+                return new Command(async () =>
+                {
+                    await Helpers.NotificationsHelper.RegisterDevice();
+                }
+
+                );
+            }
+        }
+
         public HomeViewModel() : this(new DependencyServiceBase())
         {
         }

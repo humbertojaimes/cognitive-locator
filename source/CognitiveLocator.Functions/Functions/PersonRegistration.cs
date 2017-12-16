@@ -26,50 +26,14 @@ namespace CognitiveLocator.Functions
             [BlobTrigger("images/{name}.{extension}")]CloudBlockBlob blobImage, string name, string extension, TraceWriter log)
         {
             Person p = new Person();
+            string notificationMessage = "Error";
+            bool hasError = true; ;
             string json = string.Empty;
+            string deviceId = string.Empty;
             var collection = await client_document.CreateDocumentCollectionIfNotExistsAsync(UriFactory.CreateDatabaseUri(Settings.DatabaseId), new DocumentCollection { Id = Settings.PersonCollectionId }, new RequestOptions { OfferThroughput = 1000 });
 
             //get json file from storage
             CloudBlockBlob blobJson = await StorageHelper.GetBlockBlob($"{name}.json", Settings.AzureWebJobsStorage, "metadata", false);
-      
-            //validate record has not been processed before
-            var query = client_document.CreateDocumentQuery<Person>(collection.Resource.SelfLink, new SqlQuerySpec()
-            {
-                QueryText = $"SELECT * FROM Person p WHERE p.picture = '{name}.{extension}'"
-            });
-            int count = query.ToList().Count;
-            if(count > 0)
-                return;
-
-            //determine if image has a face
-            List<JObject> list = await client_face.DetectFaces(blobImage.Uri.AbsoluteUri);
-
-            //validate image extension 
-            if (blobImage.Properties.ContentType != "image/jpeg")
-            {
-                log.Info($"no valid content type for: {name}.{extension}");
-                await blobImage.DeleteAsync();
-                await blobJson.DeleteAsync();
-                return;
-            }
-
-            //if image has no faces
-            if (list.Count == 0)
-            {
-                log.Info($"there are no faces in the image: {name}.{extension}");
-                await blobImage.DeleteAsync();
-                await blobJson.DeleteAsync();
-                return;
-            }
-
-            //if image has more than one face
-            if (list.Count > 1)
-            {
-                log.Info($"multiple faces detected in the image: {name}.{extension}");
-                await blobImage.DeleteAsync();
-                await blobJson.DeleteAsync();
-                return;
-            }
 
             try
             {
@@ -79,6 +43,59 @@ namespace CognitiveLocator.Functions
                     json = System.Text.Encoding.UTF8.GetString(memoryStream.ToArray());
                     p = JsonConvert.DeserializeObject<Person>(json);
                 }
+
+                 deviceId = p.ReportedByDeviceId;
+                await NotificationsHelper.AddToRequest(deviceId, name);
+
+                //validate record has not been processed before
+                var query = client_document.CreateDocumentQuery<Person>(collection.Resource.SelfLink, new SqlQuerySpec()
+                {
+                    QueryText = $"SELECT * FROM Person p WHERE p.picture = '{name}.{extension}'"
+                });
+                int count = query.ToList().Count;
+                if (count > 0)
+                    return;
+
+                //determine if image has a face
+                List<JObject> list = await client_face.DetectFaces(blobImage.Uri.AbsoluteUri);
+
+                //validate image extension 
+                if (blobImage.Properties.ContentType != "image/jpeg")
+                {
+                    log.Info($"no valid content type for: {name}.{extension}");
+                    await blobImage.DeleteAsync();
+                    await blobJson.DeleteAsync();
+                    notificationMessage = "Formato de fotografía incorrecto";
+                    hasError = true;
+                    await NotificationsHelper.SendNotification(hasError, notificationMessage, name, deviceId);
+                    return;
+                }
+
+                //if image has no faces
+                if (list.Count == 0)
+                {
+                    log.Info($"there are no faces in the image: {name}.{extension}");
+                    await blobImage.DeleteAsync();
+                    await blobJson.DeleteAsync();
+                    notificationMessage = "La fotografía no contiene rostros";
+                    hasError = true;
+                    await NotificationsHelper.SendNotification(hasError, notificationMessage, name, deviceId);
+                    return;
+                }
+
+                //if image has more than one face
+                if (list.Count > 1)
+                {
+                    log.Info($"multiple faces detected in the image: {name}.{extension}");
+                    await blobImage.DeleteAsync();
+                    await blobJson.DeleteAsync();
+                    notificationMessage = "La fotografía contiene mas de un rostro";
+                    hasError = true;
+                    await NotificationsHelper.SendNotification(hasError, notificationMessage, name, deviceId);
+                    return;
+                }
+
+
 
                 //register person in Face API
                 CreatePerson resultCreatePerson = await client_face.AddPersonToGroup(p.Name + " " + p.Lastname);
@@ -101,11 +118,17 @@ namespace CognitiveLocator.Functions
                 await blobImage.DeleteAsync();
                 await blobJson.DeleteAsync();
                 log.Info($"Error in file: {name}.{extension} - {ex.Message}");
+                notificationMessage = "Ocurrió un error durante el registro";
+                hasError = true;
+                await NotificationsHelper.SendNotification(hasError, notificationMessage, name, deviceId);
                 return;
             }
 
             await blobJson.DeleteAsync();
             log.Info("person registered successfully");
+            notificationMessage = "El registro se realizo correctamente";
+            hasError = false;
+            await NotificationsHelper.SendNotification(hasError, notificationMessage, name, deviceId);
         }
     }
 }

@@ -7,6 +7,7 @@ using Microsoft.WindowsAzure.MobileServices;
 using Xamarin.Facebook;
 using Xamarin.Facebook.Login;
 using CognitiveLocator.Droid.Callbacks;
+using Firebase;
 
 namespace CognitiveLocator.Droid
 {
@@ -48,6 +49,8 @@ namespace CognitiveLocator.Droid
             LoginManager.Instance.RegisterCallback(callbackManager, loginCallback);
 
             LoadApplication(new App());
+            FirebaseApp.InitializeApp(this) ;
+          
         }
 
         public override void OnRequestPermissionsResult(int requestCode, string[] permissions, Permission[] grantResults)

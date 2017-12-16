@@ -5,8 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
-    <PackageReference Include="Xamarin.Forms" Version="2.5.0.91635" />
     <PackageReference Include="Xam.Plugin.Media" Version="3.0.1" />
     <PackageReference Include="WindowsAzure.Storage" Version="8.6.0" />
     <PackageReference Include="Xam.Plugins.Settings" Version="3.1.1" />
@@ -14,6 +12,8 @@
     <PackageReference Include="Microsoft.AppCenter.Crashes" Version="1.0.1" />
     <PackageReference Include="Microsoft.AppCenter" Version="1.0.1" />
     <PackageReference Include="Xam.Plugin.Connectivity" Version="3.0.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
+    <PackageReference Include="Xamarin.Forms" Version="2.5.0.121934" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="DevKit.Xamarin.ImageKit.Abstractions">

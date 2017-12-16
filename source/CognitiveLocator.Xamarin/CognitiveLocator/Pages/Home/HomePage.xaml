@@ -10,6 +10,7 @@
             <Button Command="{Binding SettingsCommand}" Text="{Binding Home_Settings}" />
             <Button Command="{Binding AboutCommand}" Text="{Binding Home_About}" />
             <Button Command="{Binding LogoutCommand}" Text="{Binding Home_Logout}" />
+            <Button Command="{Binding NotificationsCommand}" Text="Notificaciones" />
         </StackLayout>
     </ScrollView>
 </pages:BasePage>

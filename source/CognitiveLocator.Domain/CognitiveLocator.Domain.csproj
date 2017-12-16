@@ -35,6 +35,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Documents\DeviceInstallation.cs" />
     <Compile Include="Request\BaseRequest.cs" />
     <Compile Include="FaceAPI\AddFaceToList.cs" />
     <Compile Include="FaceAPI\AddPersonFace.cs" />

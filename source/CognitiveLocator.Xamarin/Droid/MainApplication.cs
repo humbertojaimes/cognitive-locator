@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 using Android.App;
 using Android.OS;
@@ -7,12 +7,12 @@ using Plugin.CurrentActivity;
 
 namespace CognitiveLocator.Droid
 {
-    //You can specify additional application information in this attribute
+	//You can specify additional application information in this attribute
     [Application]
     public class MainApplication : Application, Application.IActivityLifecycleCallbacks
     {
         public MainApplication(IntPtr handle, JniHandleOwnership transer)
-          : base(handle, transer)
+          :base(handle, transer)
         {
         }
 
