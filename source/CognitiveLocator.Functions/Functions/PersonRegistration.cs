@@ -1,6 +1,7 @@
 using CognitiveLocator.Domain;
 using CognitiveLocator.Functions.Client;
 using CognitiveLocator.Functions.Helpers;
+using Microsoft.ApplicationInsights;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.WebJobs;
@@ -10,6 +11,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -25,12 +27,16 @@ namespace CognitiveLocator.Functions
         public static async Task Run(
             [BlobTrigger("images/{name}.{extension}")]CloudBlockBlob blobImage, string name, string extension, TraceWriter log)
         {
+
+            var tc = new TelemetryClient();
+            tc.InstrumentationKey = Settings.APPINSIGHTS_INSTRUMENTATIONKEY;
+
             Person p = new Person();
             string notificationMessage = "Error";
             bool hasError = true; ;
             string json = string.Empty;
             string deviceId = string.Empty;
-            var collection = await client_document.CreateDocumentCollectionIfNotExistsAsync(UriFactory.CreateDatabaseUri(Settings.DatabaseId), new DocumentCollection { Id = Settings.PersonCollectionId }, new RequestOptions { OfferThroughput = 1000 });
+            var collection = await client_document.CreateDocumentCollectionIfNotExistsAsync(UriFactory.CreateDatabaseUri(Settings.DatabaseId), new DocumentCollection { Id = Settings.PersonCollectionId }, new RequestOptions { OfferThroughput = 1000  });
 
             //get json file from storage
             CloudBlockBlob blobJson = await StorageHelper.GetBlockBlob($"{name}.json", Settings.AzureWebJobsStorage, "metadata", false);
@@ -55,7 +61,7 @@ namespace CognitiveLocator.Functions
                 int count = query.ToList().Count;
                 if (count > 0)
                     return;
-
+                log.Info(blobImage.Uri.AbsoluteUri);
                 //determine if image has a face
                 List<JObject> list = await client_face.DetectFaces(blobImage.Uri.AbsoluteUri);
 
@@ -77,7 +83,7 @@ namespace CognitiveLocator.Functions
                     log.Info($"there are no faces in the image: {name}.{extension}");
                     await blobImage.DeleteAsync();
                     await blobJson.DeleteAsync();
-                    notificationMessage = "La fotografía no contiene rostros";
+                    notificationMessage = $"La fotografía de {p.Name} {p.Lastname} no contiene rostros";
                     hasError = true;
                     await NotificationsHelper.SendNotification(hasError, notificationMessage, name, deviceId);
                     return;
@@ -89,7 +95,7 @@ namespace CognitiveLocator.Functions
                     log.Info($"multiple faces detected in the image: {name}.{extension}");
                     await blobImage.DeleteAsync();
                     await blobJson.DeleteAsync();
-                    notificationMessage = "La fotografía contiene mas de un rostro";
+                    notificationMessage = $"La fotografía de {p.Name} {p.Lastname} contiene mas de un rostro";
                     hasError = true;
                     await NotificationsHelper.SendNotification(hasError, notificationMessage, name, deviceId);
                     return;
@@ -115,10 +121,12 @@ namespace CognitiveLocator.Functions
             }
             catch (Exception ex)
             {
+             
+                tc.TrackException(ex);
                 await blobImage.DeleteAsync();
                 await blobJson.DeleteAsync();
-                log.Info($"Error in file: {name}.{extension} - {ex.Message}");
-                notificationMessage = "Ocurrió un error durante el registro";
+                log.Info($"Error in file: {name}.{extension} - {ex.Message} {ex.StackTrace}");
+                notificationMessage = $"Ocurrió un error durante el registro de {p.Name} {p.Lastname}";
                 hasError = true;
                 await NotificationsHelper.SendNotification(hasError, notificationMessage, name, deviceId);
                 return;
@@ -126,7 +134,7 @@ namespace CognitiveLocator.Functions
 
             await blobJson.DeleteAsync();
             log.Info("person registered successfully");
-            notificationMessage = "El registro se realizo correctamente";
+            notificationMessage = $"El registro de {p.Name} {p.Lastname} se realizo correctamente";
             hasError = false;
             await NotificationsHelper.SendNotification(hasError, notificationMessage, name, deviceId);
         }

@@ -27,5 +27,7 @@ namespace CognitiveLocator.Functions
         public static string ImageStorageUrl = Environment.GetEnvironmentVariable("ImageStorageUrl");
 
         public static string ModeratorImageAPIKey = Environment.GetEnvironmentVariable("ModeratorImage_API_Subscription_Key");
+
+        public static string APPINSIGHTS_INSTRUMENTATIONKEY = Environment.GetEnvironmentVariable("APPINSIGHTS_INSTRUMENTATIONKEY");
     }
 }

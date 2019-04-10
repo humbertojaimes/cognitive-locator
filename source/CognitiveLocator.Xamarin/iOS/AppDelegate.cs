@@ -5,6 +5,8 @@ using Facebook.CoreKit;
 using System.Collections.Generic;
 using CognitiveLocator.iOS.Classes;
 using System;
+using UserNotifications;
+using CognitiveLocator.iOS.NotificationServices;
 
 namespace CognitiveLocator.iOS
 {
@@ -28,6 +30,7 @@ namespace CognitiveLocator.iOS
 
             ApplicationDelegate.SharedInstance.FinishedLaunching(app, options);
 
+
             var settings = UIUserNotificationSettings.GetSettingsForTypes(
                UIUserNotificationType.Alert | UIUserNotificationType.Badge | UIUserNotificationType.Sound,
                new NSSet());
@@ -35,6 +38,35 @@ namespace CognitiveLocator.iOS
             UIApplication.SharedApplication.RegisterUserNotificationSettings(settings);
             UIApplication.SharedApplication.RegisterForRemoteNotifications();
 
+           
+            //Create accept action
+            var replyId = "reply";
+            var replyTitle = "Reply";
+            var replyAction = UNTextInputNotificationAction.FromIdentifier(replyId, replyTitle, UNNotificationActionOptions.None,"Reply","Message");
+
+           
+
+
+            //Create category
+            var categoryID = "general";
+            var actions = new UNNotificationAction[] { replyAction };
+            var intentIDs = new string[] { };
+            var categoryOptions = new UNNotificationCategoryOptions[] { };
+            var category = UNNotificationCategory.FromIdentifier(categoryID, actions, intentIDs, UNNotificationCategoryOptions.None);
+
+            //Register category
+            var categories = new UNNotificationCategory[] { category };
+            UNUserNotificationCenter.Current.SetNotificationCategories(new NSSet<UNNotificationCategory>(categories));
+
+
+
+            UNUserNotificationCenter.Current.Delegate = new CustomUNUserNotificationCenterDelegate();
+
+
+            if (options!=null && options.ContainsKey(UIApplication.LaunchOptionsRemoteNotificationKey))
+            {
+                appIsStarting = true;
+            }
 
             return base.FinishedLaunching(app, options);
         }
@@ -48,10 +80,34 @@ namespace CognitiveLocator.iOS
         {
             base.OnActivated(uiApplication);
             AppEvents.ActivateApp();
+            appIsStarting = false;
         }
 
 
         #region Notification
+
+        bool appIsStarting = false;
+
+        [Export("applicationDidEnterBackground:")]
+        public void DidEnterBackground(UIApplication application)
+        {
+            appIsStarting = false;
+        }
+
+
+        public override void WillEnterForeground(UIApplication uiApplication)
+        {
+            appIsStarting = true;
+        }
+
+
+        [Export("applicationWillResignActive:")]
+        public void OnResignActivation(UIApplication application)
+        {
+            appIsStarting = false;
+        }
+
+
         public override void RegisteredForRemoteNotifications(UIApplication application, NSData deviceToken)
         {
             AppDelegate.InstallationId = deviceToken;
@@ -69,46 +125,77 @@ namespace CognitiveLocator.iOS
             NSDictionary userInfo,
             Action<UIBackgroundFetchResult> completionHandler)
         {
-            NSDictionary aps = userInfo.ObjectForKey(new NSString("aps")) as NSDictionary;
-
-            var messageKey = new NSString("alert");
-            var silentMessageKey = new NSString("content-available");
-            var actionKey = new NSString("action");
-
-            string message = null;
-            if (aps.ContainsKey(messageKey))
-                message = (aps[messageKey] as NSString).ToString();
-
-            // Show alert
-            if (!string.IsNullOrEmpty(message))
+            UIApplicationState state = application.ApplicationState;
+            if (state == UIApplicationState.Background ||
+                (state == UIApplicationState.Inactive &&
+                !appIsStarting))
             {
-                UIApplication.SharedApplication.InvokeOnMainThread(() =>
+                NSDictionary aps = userInfo.ObjectForKey(new NSString("aps")) as NSDictionary;
+
+                var messageKey = new NSString("alert");
+                string message = null;
+                if (aps.ContainsKey(messageKey))
+                    message = (aps[messageKey] as NSString).ToString();
+
+                ShowAlert(message);
+
+            }
+            else if (state == UIApplicationState.Inactive && appIsStarting)
+            {
+                NSDictionary aps = userInfo.ObjectForKey(new NSString("aps")) as NSDictionary;
+
+                var messageKey = new NSString("alert");
+                string message = null;
+                if (aps.ContainsKey(messageKey))
+                    message = (aps[messageKey] as NSString).ToString();
+
+                ShowAlert(message);
+                // user tapped notification
+                //completionHandler(UIBackgroundFetchResult.NewData);
+
+            }
+            else
+            {
+                NSDictionary aps = userInfo.ObjectForKey(new NSString("aps")) as NSDictionary;
+
+                var messageKey = new NSString("alert");
+                string message = null;
+                if (aps.ContainsKey(messageKey))
+                    message = (aps[messageKey] as NSString).ToString();
+
+                ShowAlert(message);
+                // app is active             
+                //completionHandler(UIBackgroundFetchResult.NoData);
+            }
+
+
+
+            void ShowAlert(string message)
+            {
+                if (!string.IsNullOrEmpty(message))
                 {
-                    var alert = UIAlertController.Create(
-                        "Notification",
-                        message,
-                        UIAlertControllerStyle.Alert);
-
-                    alert.AddAction(UIAlertAction.Create("Ok", UIAlertActionStyle.Default, null));
-
-                    var vc = UIApplication.SharedApplication.KeyWindow.RootViewController;
-                    while (vc.PresentedViewController != null)
+                    UIApplication.SharedApplication.InvokeOnMainThread(() =>
                     {
-                        vc = vc.PresentedViewController;
-                    }
+                        var alert = UIAlertController.Create(
+                            "Notificación",
+                            $"{message} {appIsStarting}",
+                            UIAlertControllerStyle.Alert);
 
-                    vc.ShowDetailViewController(alert, vc);
-                });
+                        alert.AddAction(UIAlertAction.Create("Ok", UIAlertActionStyle.Default, null));
+
+                        var vc = UIApplication.SharedApplication.KeyWindow.RootViewController;
+                        while (vc.PresentedViewController != null)
+                        {
+                            vc = vc.PresentedViewController;
+                        }
+
+                        vc.ShowDetailViewController(alert, vc);
+                    });
+                }
             }
 
-            // If message template is silent message, parse action param
-            if (aps.ContainsKey(silentMessageKey))
-            {
-                System.Diagnostics.Debug.WriteLine($"[PNS] Silent message received");
-                var action = userInfo.ObjectForKey(new NSString("action")) as NSString;
 
-                System.Diagnostics.Debug.WriteLine($"[PNS] Action required of type: {action}");
-            }
+
         }
         #endregion
     }

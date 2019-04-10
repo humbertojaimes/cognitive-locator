@@ -86,6 +86,7 @@ namespace CognitiveLocator.Functions.Helpers
             catch (Exception ex)
             {
 #warning No error handling during exception
+                throw;
             }
         }
 

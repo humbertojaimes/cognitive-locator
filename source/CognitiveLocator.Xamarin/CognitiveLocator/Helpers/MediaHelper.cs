@@ -16,11 +16,11 @@ namespace CognitiveLocator.Helpers
             {
                 var file = await CrossMedia.Current.TakePhotoAsync(new Plugin.Media.Abstractions.StoreCameraMediaOptions
                 {
-                    PhotoSize = Plugin.Media.Abstractions.PhotoSize.Full,
+                   
                     Directory = "People",
                     Name = "person.jpg",
                     MaxWidthHeight = 512,
-                    AllowCropping = true
+                    RotateImage = true
                 });
 
                 if (file != null)
@@ -31,16 +31,14 @@ namespace CognitiveLocator.Helpers
                     }
             }
 
-            return await AdjustImageSize(photo);
+            return photo; // await AdjustImageSize(photo);
         }
 
         public static async Task<byte[]> PickPhotoAsync()
         {
             byte[] photo = null;
 
-            if (Plugin.Media.CrossMedia.Current.IsCameraAvailable
-               && Plugin.Media.CrossMedia.Current.IsTakePhotoSupported)
-            {
+           
                 var file = await CrossMedia.Current.PickPhotoAsync(new Plugin.Media.Abstractions.PickMediaOptions
                 {
                     PhotoSize = Plugin.Media.Abstractions.PhotoSize.Full,
@@ -57,7 +55,7 @@ namespace CognitiveLocator.Helpers
                     if (!file.Path.EndsWith("jpg", StringComparison.OrdinalIgnoreCase))
                         photo = await CrossImageConverter.Current.ConvertPngToJpgAsync(photo, 100);
                 }
-            }
+
             return await AdjustImageSize(photo);
         }
 
@@ -87,3 +85,5 @@ namespace CognitiveLocator.Helpers
         }
     }
 }
+
+

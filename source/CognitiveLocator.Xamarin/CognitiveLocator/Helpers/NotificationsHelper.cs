@@ -11,7 +11,7 @@ namespace CognitiveLocator.Helpers
     public class NotificationsHelper
     {
         static HttpClient client = new HttpClient();
-        const string url = "http://hjrcognitivelocatordev-fun.azurewebsites.net/api/devicenotificationsregistrations/";
+        const string url = "";
 
 
         public static async Task<bool> RegisterDevice()

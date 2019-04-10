@@ -611,6 +611,12 @@ namespace CognitiveLocator.Resx {
             }
         }
         
+        public static string Home_Notifications {
+            get {
+                return ResourceManager.GetString("Home_Notifications", resourceCulture);
+            }
+        }
+        
         public static string About_Title {
             get {
                 return ResourceManager.GetString("About_Title", resourceCulture);

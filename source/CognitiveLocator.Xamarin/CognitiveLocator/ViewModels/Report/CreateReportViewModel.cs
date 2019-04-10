@@ -291,6 +291,7 @@ namespace CognitiveLocator.ViewModels
                 string NonAvailable = CreateReport_InformationNotAvailable;
                 var person = new Person
                 {
+                    ReportedByDeviceId = DependencyService.Get<Interfaces.IDeviceInstallationService>().InstallationId,
                     Country = this.SelectedCountry,
                     ReportedBy = this.reportedBy,
                     Name = this.Name,

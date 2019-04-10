@@ -389,6 +389,10 @@
         <value>Logout</value>
         <comment></comment>
     </data>
+    <data name="Home_Notifications" xml:space="preserve">
+        <value>Notifications</value>
+        <comment></comment>
+    </data>
     <data name="About_Title" xml:space="preserve">
         <value>About the project</value>
         <comment></comment>

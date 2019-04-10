@@ -1,8 +1,10 @@
 ﻿using CognitiveLocator.Domain;
+using CognitiveLocator.Domain.FaceAPI;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -64,6 +66,8 @@ namespace CognitiveLocator.Functions.Client
 
         public async Task<AddFaceToList> AddFaceToList(String stgUrl)
         {
+            await CreateListIfNoExist();
+
             using (var client = new HttpClient())
             {
                 var service = $"https://{Zone}.api.cognitive.microsoft.com/face/v1.0/facelists/" + FaceListId + "/persistedFaces";
@@ -173,5 +177,36 @@ namespace CognitiveLocator.Functions.Client
             }
             return null;
         }
+
+
+        public async Task CreateListIfNoExist()
+        {
+
+            using (var client = new HttpClient())
+            {
+                var service = $"https://{Settings.Zone}.api.cognitive.microsoft.com/face/v1.0/facelists";
+                client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", FaceAPIKey);
+                var httpResponse = await client.GetAsync(service);
+                if (httpResponse.StatusCode == HttpStatusCode.OK)
+                {
+                    var result = JsonConvert.DeserializeObject<List<FaceList>>(await httpResponse.Content.ReadAsStringAsync());
+
+                    if (!result.Where(f => f.Name == Settings.FaceListId).Any())
+                    {
+                        service = $"https://{Settings.Zone}.api.cognitive.microsoft.com/face/v1.0/facelists/{Settings.FaceListId}";
+                        byte[] byteData = Encoding.UTF8.GetBytes("{'name':'" + Settings.FaceListId + "'}");
+
+                        using (var content = new ByteArrayContent(byteData))
+                        {
+                            var response = await client.PutAsync(service, content);
+                            if (!response.IsSuccessStatusCode)
+                                throw new Exception($"FaceList {Settings.FaceListId} could not be created");
+                        }
+                    }
+
+                }
+            }
+        }
+
     }
 }

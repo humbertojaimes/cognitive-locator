@@ -5,6 +5,9 @@ namespace CognitiveLocator.Domain
 {
     public class Person
     {
+        [JsonProperty("reportedbydeviceid")]
+        public string ReportedByDeviceId { get; set; }
+
         [JsonProperty("country")]
         public string Country { get; set; }
 

@@ -21,7 +21,7 @@ namespace CognitiveLocator
             Task startup = Task.Run(() =>
             {
                 //set startup app configuration
-                Settings.FunctionURL = "https://.azurewebsites.net";
+                Settings.FunctionURL = "";
                 Settings.Cryptography = "";
 
                 //set startup language configuration

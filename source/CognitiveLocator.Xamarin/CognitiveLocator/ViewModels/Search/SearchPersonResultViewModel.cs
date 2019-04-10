@@ -140,9 +140,10 @@ namespace CognitiveLocator.ViewModels
                 }
             }
 
+            if(!(result is null))
             Results = new ObservableCollection<Person>(result);
 
-            if (!Results.Any())
+            if (Results is null || !Results.Any())
             {
                 await Application.Current.MainPage.DisplayAlert(SearchPersonResult_NoResultsHeader, SearchPersonResult_NoResultsMessage, SearchPersonResult_NoResultsAccept);
                 await NavigationService.PopAsync();

@@ -159,6 +159,11 @@ namespace CognitiveLocator.ViewModels
             get { return Resx.AppResources.ResourceManager.GetString(nameof(Home_Logout), Resx.AppResources.Culture); }
         }
 
+        public string Home_Notifications
+        {
+            get { return Resx.AppResources.ResourceManager.GetString(nameof(Home_Notifications), Resx.AppResources.Culture); }
+        }
+
         #endregion
     }
 }
